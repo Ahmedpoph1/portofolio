@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ahmed Ashraf | Offensive Security</title>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #000000; --bg2: #0a0a0a; --bg3: #111111; --bg4: #161616;
+    --accent: #e63946; --accent2: #ff6b6b;
+    --text: #fafafa; --text2: #a0a0a0; --text3: #606060;
+    --border: #222; --border2: #2a2a2a; --green: #22c55e;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; font-weight: 300; line-height: 1.7; overflow-x: hidden; }
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none; z-index: 1000; opacity: 0.4;
+  }
+
+  /* SCROLL PROGRESS */
+  #progress-bar { position: fixed; top: 0; left: 0; height: 2px; background: var(--accent); z-index: 9999; width: 0%; box-shadow: 0 0 8px rgba(230,57,70,0.6); transition: width 0.05s; }
+
+  /* REVEAL ANIMATIONS */
+  .reveal { opacity: 0; transform: translateY(30px); transition: opacity 0.7s cubic-bezier(.22,1,.36,1), transform 0.7s cubic-bezier(.22,1,.36,1); }
+  .reveal.visible { opacity: 1; transform: translateY(0); }
+  .reveal-left { opacity: 0; transform: translateX(-30px); transition: opacity 0.7s cubic-bezier(.22,1,.36,1), transform 0.7s cubic-bezier(.22,1,.36,1); }
+  .reveal-left.visible { opacity: 1; transform: translateX(0); }
+  .reveal-right { opacity: 0; transform: translateX(30px); transition: opacity 0.7s cubic-bezier(.22,1,.36,1), transform 0.7s cubic-bezier(.22,1,.36,1); }
+  .reveal-right.visible { opacity: 1; transform: translateX(0); }
+  .d1 { transition-delay: 0.1s; } .d2 { transition-delay: 0.2s; } .d3 { transition-delay: 0.3s; } .d4 { transition-delay: 0.4s; } .d5 { transition-delay: 0.5s; }
+
+  /* NAV */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 900;
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 1.25rem 3rem;
+    background: rgba(0,0,0,0.85); backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+    transition: padding 0.3s;
+  }
+  nav.scrolled { padding: 0.75rem 3rem; }
+  .nav-logo { font-family: 'Oswald', sans-serif; font-size: 1.1rem; font-weight: 600; letter-spacing: 0.15em; text-transform: uppercase; color: var(--text); text-decoration: none; }
+  .nav-logo span { color: var(--accent); }
+  .nav-links { display: flex; gap: 2rem; list-style: none; }
+  .nav-links a { font-family: 'JetBrains Mono', monospace; font-size: 0.7rem; color: var(--text2); text-decoration: none; letter-spacing: 0.08em; text-transform: uppercase; transition: color 0.2s; position: relative; }
+  .nav-links a::after { content: ''; position: absolute; bottom: -3px; left: 0; width: 0; height: 1px; background: var(--accent); transition: width 0.25s; }
+  .nav-links a:hover { color: var(--accent); }
+  .nav-links a:hover::after { width: 100%; }
+
+  /* HERO */
+  .hero { min-height: 100vh; display: flex; align-items: center; padding: 8rem 3rem 4rem; position: relative; overflow: hidden; }
+  #particles { position: absolute; inset: 0; z-index: 1; pointer-events: none; }
+  .hero-grid-bg {
+    position: absolute; inset: 0;
+    background-image: linear-gradient(rgba(230,57,70,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(230,57,70,0.04) 1px, transparent 1px);
+    background-size: 60px 60px;
+    pointer-events: none;
+    animation: gridPan 25s linear infinite;
+  }
+  @keyframes gridPan { from { background-position: 0 0; } to { background-position: 60px 60px; } }
+  .hero-glow {
+    position: absolute; top: -200px; right: -200px; width: 700px; height: 700px;
+    background: radial-gradient(circle, rgba(230,57,70,0.1) 0%, transparent 70%);
+    pointer-events: none; animation: glowPulse 5s ease-in-out infinite;
+  }
+  @keyframes glowPulse { 0%,100% { transform: scale(1); opacity:1; } 50% { transform: scale(1.15); opacity:0.6; } }
+  .hero-content { max-width: 900px; position: relative; z-index: 2; }
+  .hero-tag {
+    display: inline-flex; align-items: center; gap: 0.5rem;
+    font-family: 'JetBrains Mono', monospace; font-size: 0.72rem; color: var(--accent);
+    letter-spacing: 0.1em; text-transform: uppercase;
+    margin-bottom: 1.5rem; padding: 0.4rem 0.8rem;
+    border: 1px solid rgba(230,57,70,0.3); border-radius: 2px;
+    background: rgba(230,57,70,0.05);
+    animation: fadeInUp 0.6s ease both;
+  }
+  .hero-tag::before { content: ''; display: inline-block; width: 6px; height: 6px; background: var(--accent); border-radius: 50%; animation: blink 1.5s infinite; }
+  @keyframes blink { 0%,100% { opacity:1; } 50% { opacity:0.2; } }
+  .hero h1 { font-family: 'Oswald', sans-serif; font-size: clamp(3.5rem, 9vw, 7.5rem); font-weight: 700; line-height: 0.92; letter-spacing: -0.02em; text-transform: uppercase; animation: fadeInUp 0.6s 0.1s ease both; margin-bottom: 0.2em; }
+  .hero h1 .line-red { color: var(--accent); display: block; }
+  .hero-typing-wrap { font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; color: var(--text2); margin-top: 1.5rem; animation: fadeInUp 0.6s 0.2s ease both; min-height: 2em; }
+  .hero-typing-wrap .prefix { color: var(--accent); }
+  #typed-text { color: var(--text); }
+  .cursor { display: inline-block; width: 2px; height: 1em; background: var(--accent); margin-left: 2px; vertical-align: middle; animation: cursorBlink 0.9s infinite; }
+  @keyframes cursorBlink { 0%,49% { opacity:1; } 50%,100% { opacity:0; } }
+  .hero-cta { display: flex; gap: 1rem; margin-top: 2.5rem; flex-wrap: wrap; animation: fadeInUp 0.6s 0.3s ease both; }
+  .btn-primary {
+    display: inline-flex; align-items: center; gap: 0.5rem;
+    font-family: 'Oswald', sans-serif; font-size: 0.85rem; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase;
+    color: #000; background: var(--accent); padding: 0.85rem 1.8rem; text-decoration: none; border-radius: 2px;
+    transition: background 0.2s, transform 0.2s, box-shadow 0.2s;
+  }
+  .btn-primary:hover { background: var(--accent2); transform: translateY(-3px); box-shadow: 0 8px 24px rgba(230,57,70,0.3); }
+  .btn-secondary {
+    display: inline-flex; align-items: center; gap: 0.5rem;
+    font-family: 'Oswald', sans-serif; font-size: 0.85rem; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--text); background: transparent; padding: 0.85rem 1.8rem; text-decoration: none;
+    border: 1px solid var(--border2); border-radius: 2px;
+    transition: border-color 0.2s, color 0.2s, transform 0.2s;
+  }
+  .btn-secondary:hover { border-color: var(--accent); color: var(--accent); transform: translateY(-3px); }
+  .btn-cv {
+    display: inline-flex; align-items: center; gap: 0.5rem;
+    font-family: 'Oswald', sans-serif; font-size: 0.85rem; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--text); background: transparent; padding: 0.85rem 1.8rem; text-decoration: none;
+    border: 1px solid rgba(34,197,94,0.4); border-radius: 2px;
+    transition: all 0.2s;
+  }
+  .btn-cv svg { color: var(--green); }
+  .btn-cv:hover { border-color: var(--green); color: var(--green); transform: translateY(-3px); box-shadow: 0 6px 20px rgba(34,197,94,0.15); }
+  .btn-cv:hover svg { animation: dlBounce 0.5s ease infinite alternate; }
+  @keyframes dlBounce { from { transform: translateY(0); } to { transform: translateY(3px); } }
+  .hero-stats { display: flex; gap: 3rem; margin-top: 4rem; padding-top: 2rem; border-top: 1px solid var(--border); animation: fadeInUp 0.6s 0.4s ease both; flex-wrap: wrap; }
+  .stat-num { font-family: 'Oswald', sans-serif; font-size: 2rem; font-weight: 700; color: var(--accent); line-height: 1; }
+  .stat-label { font-family: 'JetBrains Mono', monospace; font-size: 0.68rem; color: var(--text3); text-transform: uppercase; letter-spacing: 0.08em; margin-top: 0.3rem; }
+  @keyframes fadeInUp { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: translateY(0); } }
+
+  /* SECTION SHARED */
+  section { padding: 6rem 3rem; position: relative; }
+  .section-header { display: flex; align-items: baseline; gap: 1rem; margin-bottom: 3.5rem; }
+  .section-num { font-family: 'JetBrains Mono', monospace; font-size: 0.72rem; color: var(--accent); letter-spacing: 0.1em; }
+  .section-title { font-family: 'Oswald', sans-serif; font-size: clamp(1.8rem, 4vw, 2.8rem); font-weight: 700; text-transform: uppercase; letter-spacing: 0.02em; line-height: 1; }
+  .section-line { flex: 1; height: 1px; background: var(--border); }
+
+  /* ABOUT */
+  #about { background: var(--bg2); }
+  .about-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4rem; align-items: start; }
+  .about-text p { color: var(--text2); font-size: 0.95rem; line-height: 1.9; margin-bottom: 1.2rem; }
+  .about-text strong { color: var(--text); font-weight: 500; }
+  .about-links { display: flex; flex-direction: column; gap: 0.75rem; margin-top: 1.5rem; }
+  .contact-item { display: flex; align-items: center; gap: 0.75rem; font-family: 'JetBrains Mono', monospace; font-size: 0.78rem; color: var(--text2); text-decoration: none; padding: 0.6rem 0.8rem; border: 1px solid var(--border); border-radius: 2px; transition: border-color 0.2s, color 0.2s, transform 0.2s; }
+  .contact-item:hover { border-color: var(--accent); color: var(--text); transform: translateX(5px); }
+  .contact-item svg { flex-shrink: 0; color: var(--accent); }
+  .about-edu { background: var(--bg3); border: 1px solid var(--border); border-radius: 4px; padding: 2rem; }
+  .edu-label { font-family: 'JetBrains Mono', monospace; font-size: 0.68rem; color: var(--accent); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 1.2rem; }
+  .edu-item { padding-bottom: 1.2rem; margin-bottom: 1.2rem; border-bottom: 1px solid var(--border); }
+  .edu-item:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+  .edu-degree { font-family: 'Oswald', sans-serif; font-size: 1rem; font-weight: 500; color: var(--text); }
+  .edu-school { font-size: 0.8rem; color: var(--text2); margin-top: 0.2rem; }
+  .edu-year { font-family: 'JetBrains Mono', monospace; font-size: 0.68rem; color: var(--text3); margin-top: 0.3rem; }
+
+  /* CV SECTION */
+  #cv { background: var(--bg); }
+  .cv-inner { display: grid; grid-template-columns: 1fr 1fr; gap: 4rem; align-items: center; }
+  .cv-text h3 { font-family: 'Oswald', sans-serif; font-size: 2rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em; margin-bottom: 1rem; line-height: 1.1; }
+  .cv-text p { color: var(--text2); font-size: 0.9rem; line-height: 1.8; margin-bottom: 1rem; }
+  .cv-hint { font-family: 'JetBrains Mono', monospace; font-size: 0.72rem; color: var(--text3); background: var(--bg3); border: 1px solid var(--border); border-left: 2px solid var(--accent); padding: 0.75rem 1rem; border-radius: 0 2px 2px 0; margin-top: 1rem; }
+  .cv-hint code { color: var(--accent); }
+  .cv-card {
+    background: var(--bg3); border: 1px solid var(--border2); border-radius: 6px;
+    padding: 2.5rem; display: flex; flex-direction: column; align-items: center; gap: 1.5rem; text-align: center;
+    position: relative; overflow: hidden;
+    transition: border-color 0.3s, transform 0.3s, box-shadow 0.3s;
+  }
+  .cv-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, var(--accent), transparent); }
+  .cv-card:hover { border-color: rgba(230,57,70,0.4); transform: translateY(-5px); box-shadow: 0 16px 40px rgba(0,0,0,0.5); }
+  .cv-icon { width: 64px; height: 64px; display: flex; align-items: center; justify-content: center; background: rgba(230,57,70,0.08); border: 1px solid rgba(230,57,70,0.2); border-radius: 4px; color: var(--accent); animation: iconFloat 3s ease-in-out infinite; }
+  @keyframes iconFloat { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-7px); } }
+  .cv-card-title { font-family: 'Oswald', sans-serif; font-size: 1.1rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
+  .cv-card-meta { font-family: 'JetBrains Mono', monospace; font-size: 0.68rem; color: var(--text3); display: flex; gap: 0.6rem; flex-wrap: wrap; justify-content: center; }
+  .cv-card-meta span { padding: 0.2rem 0.5rem; background: var(--bg4); border: 1px solid var(--border); border-radius: 2px; }
+  .btn-download {
+    display: inline-flex; align-items: center; gap: 0.6rem;
+    font-family: 'Oswald', sans-serif; font-size: 0.9rem; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase;
+    color: #000; background: var(--accent); padding: 0.9rem 2rem; text-decoration: none; border-radius: 2px;
+    width: 100%; justify-content: center;
+    transition: background 0.2s, transform 0.2s, box-shadow 0.2s;
+    cursor: pointer; border: none;
+  }
+  .btn-download:hover { background: var(--accent2); transform: translateY(-2px); box-shadow: 0 8px 24px rgba(230,57,70,0.35); }
+  .btn-download:hover svg { animation: dlBounce 0.4s ease infinite alternate; }
+  .cv-note { font-family: 'JetBrains Mono', monospace; font-size: 0.62rem; color: var(--text3); letter-spacing: 0.05em; }
+
+  /* SKILLS */
+  #skills { background: var(--bg2); }
+  .skills-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; }
+  .skill-card {
+    background: var(--bg3); border: 1px solid var(--border); border-radius: 4px; padding: 1.75rem;
+    transition: border-color 0.2s, transform 0.3s, box-shadow 0.3s;
+    position: relative; overflow: hidden;
+  }
+  .skill-card::after { content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 1px; background: linear-gradient(90deg, var(--accent), transparent); transform: scaleX(0); transform-origin: left; transition: transform 0.3s; }
+  .skill-card:hover { border-color: rgba(230,57,70,0.4); transform: translateY(-4px); box-shadow: 0 12px 32px rgba(0,0,0,0.4); }
+  .skill-card:hover::after { transform: scaleX(1); }
+  .skill-card-icon { width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; background: rgba(230,57,70,0.1); border: 1px solid rgba(230,57,70,0.2); border-radius: 2px; margin-bottom: 1rem; color: var(--accent); transition: transform 0.2s; }
+  .skill-card:hover .skill-card-icon { transform: rotate(-6deg) scale(1.1); }
+  .skill-card-title { font-family: 'Oswald', sans-serif; font-size: 1rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.75rem; }
+  .skill-tags { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+  .skill-tag { font-family: 'JetBrains Mono', monospace; font-size: 0.65rem; color: var(--text3); background: var(--bg4); border: 1px solid var(--border); padding: 0.25rem 0.5rem; border-radius: 2px; letter-spacing: 0.05em; transition: color 0.2s, border-color 0.2s; }
+  .skill-card:hover .skill-tag { color: var(--text2); border-color: var(--border2); }
+
+  /* COURSES */
+  #courses { background: var(--bg); }
+  .courses-list { display: flex; flex-direction: column; gap: 1.5rem; }
+  .course-card { background: var(--bg3); border: 1px solid var(--border); border-left: 3px solid var(--accent); border-radius: 0 4px 4px 0; padding: 1.75rem 2rem; display: grid; grid-template-columns: 1fr auto; gap: 1rem; transition: background 0.2s, transform 0.25s, box-shadow 0.25s; }
+  .course-card:hover { background: var(--bg4); transform: translateX(8px); box-shadow: -5px 0 24px rgba(230,57,70,0.12); }
+  .course-name { font-family: 'Oswald', sans-serif; font-size: 1.1rem; font-weight: 600; color: var(--text); text-transform: uppercase; letter-spacing: 0.03em; margin-bottom: 0.5rem; }
+  .course-bullets { list-style: none; display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.75rem; }
+  .course-bullets li { font-family: 'JetBrains Mono', monospace; font-size: 0.63rem; color: var(--text3); background: rgba(230,57,70,0.06); border: 1px solid rgba(230,57,70,0.12); padding: 0.2rem 0.5rem; border-radius: 2px; letter-spacing: 0.04em; }
+  .course-period { font-family: 'JetBrains Mono', monospace; font-size: 0.68rem; color: var(--accent); white-space: nowrap; padding-top: 0.2rem; }
+
+  /* PROJECTS */
+  #projects { background: var(--bg2); }
+  .projects-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 1.5rem; }
+  .project-card { background: var(--bg3); border: 1px solid var(--border); border-radius: 4px; overflow: hidden; transition: border-color 0.2s, transform 0.3s, box-shadow 0.3s; display: flex; flex-direction: column; }
+  .project-card:hover { border-color: rgba(230,57,70,0.5); transform: translateY(-7px); box-shadow: 0 16px 40px rgba(0,0,0,0.5); }
+  .project-card-top { padding: 1.75rem; flex: 1; }
+  .project-label { font-family: 'JetBrains Mono', monospace; font-size: 0.65rem; color: var(--accent); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.75rem; display: flex; align-items: center; gap: 0.4rem; }
+  .project-label::before { content: ''; display: inline-block; width: 5px; height: 5px; background: var(--accent); border-radius: 50%; animation: blink 2s infinite; }
+  .project-title { font-family: 'Oswald', sans-serif; font-size: 1.3rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em; margin-bottom: 0.75rem; }
+  .project-desc { font-size: 0.85rem; color: var(--text2); line-height: 1.8; }
+  .project-tools { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 1rem; }
+  .project-tool { font-family: 'JetBrains Mono', monospace; font-size: 0.62rem; color: var(--text3); background: var(--bg4); border: 1px solid var(--border); padding: 0.2rem 0.5rem; border-radius: 2px; }
+  .project-card-footer { padding: 1rem 1.75rem; border-top: 1px solid var(--border); display: flex; gap: 1rem; }
+  .project-link { font-family: 'JetBrains Mono', monospace; font-size: 0.68rem; color: var(--text2); text-decoration: none; display: flex; align-items: center; gap: 0.35rem; transition: color 0.2s; }
+  .project-link:hover { color: var(--accent); }
+
+  /* CONTACT */
+  #contact { background: var(--bg); text-align: center; }
+  .contact-inner { max-width: 600px; margin: 0 auto; }
+  .contact-inner > p { color: var(--text2); font-size: 0.95rem; margin-bottom: 2.5rem; line-height: 1.8; }
+  .contact-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; text-align: left; margin-top: 2rem; }
+  .contact-card { background: var(--bg3); border: 1px solid var(--border); border-radius: 4px; padding: 1.25rem; text-decoration: none; color: var(--text); display: flex; align-items: center; gap: 0.75rem; transition: border-color 0.2s, transform 0.2s, box-shadow 0.2s; }
+  .contact-card:hover { border-color: var(--accent); transform: translateY(-3px); box-shadow: 0 8px 24px rgba(0,0,0,0.3); }
+  .contact-card svg { color: var(--accent); flex-shrink: 0; }
+  .contact-card-label { font-family: 'JetBrains Mono', monospace; font-size: 0.65rem; color: var(--text3); text-transform: uppercase; letter-spacing: 0.08em; }
+  .contact-card-value { font-size: 0.82rem; color: var(--text2); margin-top: 0.1rem; word-break: break-all; }
+
+  footer { background: var(--bg2); border-top: 1px solid var(--border); padding: 2rem 3rem; display: flex; justify-content: space-between; align-items: center; }
+  .footer-logo { font-family: 'Oswald', sans-serif; font-size: 0.9rem; font-weight: 600; letter-spacing: 0.15em; text-transform: uppercase; color: var(--text3); }
+  .footer-logo span { color: var(--accent); }
+  .footer-copy { font-family: 'JetBrains Mono', monospace; font-size: 0.65rem; color: var(--text3); letter-spacing: 0.05em; }
+
+  @media (max-width: 768px) {
+    nav { padding: 1rem 1.5rem; } nav.scrolled { padding: 0.6rem 1.5rem; }
+    .nav-links { display: none; }
+    section { padding: 4rem 1.5rem; }
+    .hero { padding: 7rem 1.5rem 3rem; }
+    .about-grid, .cv-inner { grid-template-columns: 1fr; gap: 2rem; }
+    .contact-grid { grid-template-columns: 1fr; }
+    .hero-stats { gap: 1.5rem; }
+    footer { flex-direction: column; gap: 0.5rem; text-align: center; }
+  }
+</style>
+</head>
+<body>
+
+<div id="progress-bar"></div>
+
+<nav id="navbar">
+  <a href="#" class="nav-logo">Ahmed<span>.</span>Ashraf</a>
+  <ul class="nav-links">
+    <li><a href="#about">About</a></li>
+    <li><a href="#cv">CV</a></li>
+    <li><a href="#skills">Skills</a></li>
+    <li><a href="#courses">Courses</a></li>
+    <li><a href="#projects">Projects</a></li>
+    <li><a href="#contact">Contact</a></li>
+  </ul>
+</nav>
+
+<!-- HERO -->
+<section class="hero" id="home">
+  <canvas id="particles"></canvas>
+  <div class="hero-grid-bg"></div>
+  <div class="hero-glow"></div>
+  <div class="hero-content">
+    <div class="hero-tag">Available for opportunities</div>
+    <h1>Ahmed<br><span class="line-red">Ashraf</span></h1>
+    <div class="hero-typing-wrap">
+      <span class="prefix">&gt; </span><span id="typed-text"></span><span class="cursor"></span>
+    </div>
+    <div class="hero-cta">
+      <a href="#projects" class="btn-primary">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12l7 7 7-7"/></svg>
+        View Work
+      </a>
+      <a href="#cv" class="btn-cv">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Download CV
+      </a>
+      <a href="#contact" class="btn-secondary">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+        Get In Touch
+      </a>
+    </div>
+    <div class="hero-stats">
+      <div class="stat-item"><div class="stat-num" data-count="2">0</div><div class="stat-label">Years Experience</div></div>
+      <div class="stat-item"><div class="stat-num" data-count="3">0</div><div class="stat-label">Security Courses</div></div>
+      <div class="stat-item"><div class="stat-num">OWASP</div><div class="stat-label">Top 10 Specialist</div></div>
+      <div class="stat-item"><div class="stat-num">Red</div><div class="stat-label">Team Operations</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ABOUT -->
+<section id="about">
+  <div class="section-header reveal">
+    <span class="section-num">// 01</span>
+    <h2 class="section-title">About</h2>
+    <div class="section-line"></div>
+  </div>
+  <div class="about-grid">
+    <div class="about-text reveal-left">
+      <p>Computer Science student at <strong>Modern Academy Maadi</strong> and a dedicated Security Researcher specializing in <strong>Offensive Security</strong> and Web Application Penetration Testing.</p>
+      <p>Experienced in <strong>vulnerability analysis</strong>, Red Team operations, and building specialized lab environments for security testing. Proven track record in identifying complex vulnerabilities and sharing technical knowledge through educational content.</p>
+      <p>Creator of structured security education content on <strong>YouTube</strong> — demonstrating practical exploitation techniques in controlled lab setups for the Arabic-speaking security community.</p>
+      <div class="about-links">
+        <a href="mailto:aahmed69166@gmail.com" class="contact-item">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+          aahmed69166@gmail.com
+        </a>
+        <a href="tel:+201207081987" class="contact-item">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.61 3.4 2 2 0 0 1 3.6 1.22h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L7.91 8.8A16 16 0 0 0 16 16.88l1.94-1.94a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 24 16.92z"/></svg>
+          +20 120 708 1987
+        </a>
+      </div>
+    </div>
+    <div class="about-edu reveal-right">
+      <div class="edu-label">// Education &amp; Background</div>
+      <div class="edu-item"><div class="edu-degree">B.Sc. Computer Science</div><div class="edu-school">Modern Academy Maadi</div><div class="edu-year">2024 – 2028</div></div>
+      <div class="edu-item"><div class="edu-degree">YouTube Instructor</div><div class="edu-school">Cyber Security Channel</div><div class="edu-year">2025 – Present</div></div>
+      <div class="edu-item"><div class="edu-degree">Security Researcher</div><div class="edu-school">Offensive Security &amp; Web AppSec</div><div class="edu-year">2+ Years Experience</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- CV DOWNLOAD -->
+<section id="cv">
+  <div class="section-header reveal">
+    <span class="section-num">// 02</span>
+    <h2 class="section-title">Resume / CV</h2>
+    <div class="section-line"></div>
+  </div>
+  <div class="cv-inner">
+    <div class="cv-text reveal-left">
+      <h3>Download My<br><span style="color:var(--accent)">Full CV</span></h3>
+      <p>My CV covers my complete background in offensive security — penetration testing experience, technical skills, courses completed, projects, and educational content creation on YouTube.</p>
+      <div class="cv-hint">
+        <strong>To activate the download button:</strong><br>
+        Upload your CV PDF anywhere (Google Drive, Dropbox, etc.), copy the direct download link, and replace <code>YOUR_CV_LINK_HERE.pdf</code> in the button's <code>href</code>.
+      </div>
+    </div>
+    <div class="cv-card reveal-right">
+      <div class="cv-icon">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+          <polyline points="14 2 14 8 20 8"/>
+          <line x1="16" y1="13" x2="8" y2="13"/>
+          <line x1="16" y1="17" x2="8" y2="17"/>
+          <polyline points="10 9 9 9 8 9"/>
+        </svg>
+      </div>
+      <div class="cv-card-title">Ahmed Ashraf — CV</div>
+      <div class="cv-card-meta">
+        <span>PDF Format</span>
+        <span>Offensive Security</span>
+        <span>2025</span>
+      </div>
+      <a href="YOUR_CV_LINK_HERE.pdf" download="Ahmed_Ashraf_CV.pdf" class="btn-download">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+          <polyline points="7 10 12 15 17 10"/>
+          <line x1="12" y1="15" x2="12" y2="3"/>
+        </svg>
+        Download CV
+      </a>
+      <div class="cv-note">// Replace href with your actual CV file link</div>
+    </div>
+  </div>
+</section>
+
+<!-- SKILLS -->
+<section id="skills">
+  <div class="section-header reveal">
+    <span class="section-num">// 03</span>
+    <h2 class="section-title">Skills</h2>
+    <div class="section-line"></div>
+  </div>
+  <div class="skills-grid">
+    <div class="skill-card reveal d1"><div class="skill-card-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg></div><div class="skill-card-title">Offensive Security</div><div class="skill-tags"><span class="skill-tag">Penetration Testing</span><span class="skill-tag">Red Teaming</span><span class="skill-tag">Exploit Dev</span><span class="skill-tag">WAF Bypass</span><span class="skill-tag">AV/EDR Evasion</span></div></div>
+    <div class="skill-card reveal d2"><div class="skill-card-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg></div><div class="skill-card-title">Web App Security</div><div class="skill-tags"><span class="skill-tag">OWASP Top 10</span><span class="skill-tag">SQLi / XSS</span><span class="skill-tag">SSRF / XXE</span><span class="skill-tag">IDOR / BOLA</span><span class="skill-tag">OAuth Attacks</span><span class="skill-tag">API Security</span></div></div>
+    <div class="skill-card reveal d3"><div class="skill-card-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="8" rx="2"/><rect x="2" y="14" width="20" height="8" rx="2"/><line x1="6" y1="6" x2="6.01" y2="6"/><line x1="6" y1="18" x2="6.01" y2="18"/></svg></div><div class="skill-card-title">Active Directory</div><div class="skill-tags"><span class="skill-tag">Kerberoasting</span><span class="skill-tag">AS-REP Roasting</span><span class="skill-tag">Golden Ticket</span><span class="skill-tag">Pass-the-Hash</span><span class="skill-tag">Lateral Movement</span></div></div>
+    <div class="skill-card reveal d1"><div class="skill-card-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg></div><div class="skill-card-title">Tools &amp; Automation</div><div class="skill-tags"><span class="skill-tag">Burp Suite</span><span class="skill-tag">Metasploit</span><span class="skill-tag">Kali Linux</span><span class="skill-tag">Nmap</span><span class="skill-tag">Python</span><span class="skill-tag">Bash</span><span class="skill-tag">OSINT</span></div></div>
+    <div class="skill-card reveal d2"><div class="skill-card-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div><div class="skill-card-title">Code Security (SAST)</div><div class="skill-tags"><span class="skill-tag">C/C++</span><span class="skill-tag">Python</span><span class="skill-tag">JavaScript</span><span class="skill-tag">Node.js</span><span class="skill-tag">PHP</span><span class="skill-tag">React</span><span class="skill-tag">NestJS</span></div></div>
+    <div class="skill-card reveal d3"><div class="skill-card-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div><div class="skill-card-title">Reporting &amp; CTF</div><div class="skill-tags"><span class="skill-tag">Vuln Reports</span><span class="skill-tag">PoC Writing</span><span class="skill-tag">CTF Challenges</span><span class="skill-tag">HackTheBox</span><span class="skill-tag">TryHackMe</span></div></div>
+  </div>
+</section>
+
+<!-- COURSES -->
+<section id="courses">
+  <div class="section-header reveal"><span class="section-num">// 04</span><h2 class="section-title">Courses</h2><div class="section-line"></div></div>
+  <div class="courses-list">
+    <div class="course-card reveal"><div><div class="course-name">Advanced Web Penetration Testing (eWPTX &amp; Beyond)</div><ul class="course-bullets"><li>Advanced XSS &amp; SQLi</li><li>WAF Bypass</li><li>GraphQL &amp; REST API Attacks</li><li>Web Cache Poisoning</li><li>OAuth Bypass</li><li>Business Logic Flaws</li><li>NoSQL Injection</li><li>Professional Vuln Reports</li></ul></div><div class="course-period">Mar 2025 – Present</div></div>
+    <div class="course-card reveal d1"><div><div class="course-name">Web Security &amp; Bug Hunting (OWASP Top 10 Specialist)</div><ul class="course-bullets"><li>SSRF / XXE</li><li>Template Injection</li><li>Command Injection</li><li>IDOR / BAC</li><li>Race Conditions</li><li>CSRF / CORS</li><li>Manual SQLi</li><li>File Upload Vulns</li></ul></div><div class="course-period">Jan 2024 – Aug 2024</div></div>
+    <div class="course-card reveal d2"><div><div class="course-name">BEN-200: Offensive Security &amp; Network Penetration Testing</div><ul class="course-bullets"><li>Active Directory Exploitation</li><li>Privilege Escalation (Win/Linux)</li><li>Post-Exploitation</li><li>Lateral Movement</li><li>Pass-the-Hash</li><li>AV/EDR Evasion</li><li>Password Cracking</li><li>Custom Payload Dev</li></ul></div><div class="course-period">Aug 2025 – Feb 2026</div></div>
+  </div>
+</section>
+
+<!-- PROJECTS -->
+<section id="projects">
+  <div class="section-header reveal"><span class="section-num">// 05</span><h2 class="section-title">Projects</h2><div class="section-line"></div></div>
+  <div class="projects-grid">
+    <div class="project-card reveal d1"><div class="project-card-top"><div class="project-label">Security Research</div><div class="project-title">Security Matrix</div><p class="project-desc">Web application security assessments in controlled environments — identifying injection flaws, access control issues, and misconfigurations. Documented with structured technical reports and PoC demos.</p><div class="project-tools"><span class="project-tool">Kali Linux</span><span class="project-tool">Burp Suite</span><span class="project-tool">Nmap</span><span class="project-tool">Metasploit</span></div></div><div class="project-card-footer"><a href="https://github.com/Ahmedpoph1/projects.git" target="_blank" class="project-link"><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>GitHub</a></div></div>
+    <div class="project-card reveal d2"><div class="project-card-top"><div class="project-label">Education &amp; Content</div><div class="project-title">YouTube — Cyber Security</div><p class="project-desc">Structured educational content on web penetration testing for the Arabic-speaking security community. Practical exploitation demos in controlled lab setups with technical write-ups.</p><div class="project-tools"><span class="project-tool">Content Creation</span><span class="project-tool">Lab Setup</span><span class="project-tool">Web AppSec</span><span class="project-tool">Arabic</span></div></div><div class="project-card-footer"><a href="https://github.com/Ahmedpoph1" target="_blank" class="project-link"><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>GitHub</a></div></div>
+    <div class="project-card reveal d3"><div class="project-card-top"><div class="project-label">Tool Development</div><div class="project-title">Custom Exploitation Scripts</div><p class="project-desc">Automated exploitation scripts and custom scanners in Python and Bash to streamline pentesting workflows. Includes custom payload generators and vulnerability scanners for web and network targets.</p><div class="project-tools"><span class="project-tool">Python</span><span class="project-tool">Bash</span><span class="project-tool">Automation</span><span class="project-tool">Custom Payloads</span></div></div><div class="project-card-footer"><a href="https://github.com/Ahmedpoph1" target="_blank" class="project-link"><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>GitHub</a></div></div>
+  </div>
+</section>
+
+<!-- CONTACT -->
+<section id="contact">
+  <div class="section-header reveal"><span class="section-num">// 06</span><h2 class="section-title">Contact</h2><div class="section-line"></div></div>
+  <div class="contact-inner">
+    <p class="reveal">Looking to collaborate, have a security assessment need, or want to discuss offensive security? Reach out below.</p>
+    <div class="contact-grid">
+      <a href="mailto:aahmed69166@gmail.com" class="contact-card reveal d1"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg><div><div class="contact-card-label">Email</div><div class="contact-card-value">aahmed69166@gmail.com</div></div></a>
+      <a href="tel:+201207081987" class="contact-card reveal d2"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.61 3.4 2 2 0 0 1 3.6 1.22h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L7.91 8.8A16 16 0 0 0 16 16.88l1.94-1.94a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 24 16.92z"/></svg><div><div class="contact-card-label">Phone</div><div class="contact-card-value">+20 120 708 1987</div></div></a>
+      <a href="https://www.linkedin.com/in/ahmed-ashraf-pr" target="_blank" class="contact-card reveal d3"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg><div><div class="contact-card-label">LinkedIn</div><div class="contact-card-value">ahmed-ashraf-pr</div></div></a>
+      <a href="https://github.com/Ahmedpoph1" target="_blank" class="contact-card reveal d4"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg><div><div class="contact-card-label">GitHub</div><div class="contact-card-value">Ahmedpoph1</div></div></a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="footer-logo">Ahmed<span>.</span>Ashraf</div>
+  <div class="footer-copy">© 2025 — Offensive Security Researcher</div>
+</footer>
+
+<script>
+// SCROLL PROGRESS
+window.addEventListener('scroll', () => {
+  const d = document.documentElement;
+  document.getElementById('progress-bar').style.width = (d.scrollTop / (d.scrollHeight - d.clientHeight) * 100) + '%';
+  document.getElementById('navbar').classList.toggle('scrolled', d.scrollTop > 60);
+});
+
+// SCROLL REVEAL
+const obs = new IntersectionObserver(entries => entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); }), { threshold: 0.1 });
+document.querySelectorAll('.reveal, .reveal-left, .reveal-right').forEach(el => obs.observe(el));
+
+// TYPING
+const phrases = ['Offensive Security Researcher','Web App Penetration Tester','Red Team Operator','Security Educator on YouTube','OWASP Top 10 Specialist'];
+let pi=0, ci=0, del=false;
+const el = document.getElementById('typed-text');
+function type() {
+  const p = phrases[pi];
+  if (!del) { el.textContent = p.slice(0, ++ci); if (ci===p.length) { del=true; setTimeout(type,1800); return; } }
+  else { el.textContent = p.slice(0, --ci); if (ci===0) { del=false; pi=(pi+1)%phrases.length; } }
+  setTimeout(type, del?40:80);
+}
+setTimeout(type, 900);
+
+// COUNTERS
+const cObs = new IntersectionObserver(entries => entries.forEach(e => {
+  if (!e.isIntersecting) return;
+  const t = +e.target.dataset.count, step = t/40;
+  let c=0; const iv = setInterval(() => { c+=step; if(c>=t){e.target.textContent=t+'+';clearInterval(iv);}else e.target.textContent=Math.floor(c)+'+'; },40);
+  cObs.unobserve(e.target);
+}));
+document.querySelectorAll('[data-count]').forEach(el => cObs.observe(el));
+
+// PARTICLES
+const canvas = document.getElementById('particles');
+const ctx = canvas.getContext('2d');
+function resize(){ canvas.width=canvas.offsetWidth; canvas.height=canvas.offsetHeight; }
+resize(); window.addEventListener('resize', resize);
+const pts = Array.from({length:55}, ()=>({ x:Math.random()*canvas.width, y:Math.random()*canvas.height, r:Math.random()*1.4+0.3, vx:(Math.random()-.5)*0.35, vy:(Math.random()-.5)*0.35, o:Math.random()*0.35+0.1 }));
+function draw(){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  pts.forEach((p,i) => {
+    p.x+=p.vx; p.y+=p.vy;
+    if(p.x<0||p.x>canvas.width) p.vx*=-1;
+    if(p.y<0||p.y>canvas.height) p.vy*=-1;
+    ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+    ctx.fillStyle=`rgba(230,57,70,${p.o})`; ctx.fill();
+    pts.forEach((p2,j) => {
+      if(j<=i) return;
+      const dx=p.x-p2.x, dy=p.y-p2.y, d=Math.sqrt(dx*dx+dy*dy);
+      if(d<130){ ctx.beginPath(); ctx.moveTo(p.x,p.y); ctx.lineTo(p2.x,p2.y); ctx.strokeStyle=`rgba(230,57,70,${.07*(1-d/130)})`; ctx.lineWidth=0.5; ctx.stroke(); }
+    });
+  });
+  requestAnimationFrame(draw);
+}
+draw();
+</script>
+</body>
+</html>
